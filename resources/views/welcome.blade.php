@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Cadastro - Mixology</title>
+    <title>Drinkerito</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -19,7 +19,7 @@
 
     <div class="bg-white shadow-lg rounded-3xl p-5 w-full max-w-md">
         <div class="text-center mb-6">
-            <h2 class="text-3xl font-bold text-purple-700">Crie sua conta no Mixology</h2>
+            <h2 class="text-3xl font-bold text-purple-700">Crie sua conta no Drinkerito!</h2>
             <p class="text-sm text-gray-600">Descubra, compartilhe e salve drinks incríveis!</p>
         </div>
 
