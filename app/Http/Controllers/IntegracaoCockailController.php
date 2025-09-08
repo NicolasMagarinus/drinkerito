@@ -65,7 +65,23 @@ class IntegracaoCockailController extends Controller
         $arrDrink = DB::table("bebida")->pluck("id_externo");
 
         foreach ($arrDrink as $idBebida) {
-            
+            $url = "www.thecocktaildb.com/api/json/v1/1/lookup.php?i={$idBebida}";
+
+            $response = Http::get($url);
+            $objBebida = $response->json()["drinks"];
+            if ($response->successful() && !empty($objBebida)) {
+                for ($i = 1; $i < 15; $i++) {
+                    $objIngrediente = DB::table("ingrediente")->where("nm_ingrediente", "=", $objBebida[0]);
+
+                    if (!$objIngrediente) {
+                        $urlIngrediente = "www.thecocktaildb.com/api/json/v1/1/search.php?i=" . $objBebida[0]["strIngredient{$i}"];
+
+                        $ingredientResponse = Http::get($urlIngrediente);
+
+                        //buscar ingrediente pelo id, inserir em ingrediente e depois inserir em bebida_ingrediente. Pegar as medidas
+                    }
+                }
+            }
         }
     }
 
