@@ -3,26 +3,75 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 class IntegracaoCockailController extends Controller
 {
     public static function getDrinks()
     {
-        $response = Http::get("https://www.thecocktaildb.com/api/json/v1/1/search.php?s=margarita");
+        $alphabet = range('a', 'z');
 
-        $drinks = $response->json()['drinks'];
+        foreach ($alphabet as $letter) {
+            $url = "https://www.thecocktaildb.com/api/json/v1/1/search.php?f={$letter}";
+            $response = Http::get($url);
 
-        foreach ($drinks as $drink) {
-            $drink = self::traduzirTexto($drink['strInstructions']);
-            error_log(json_encode($drink, JSON_UNESCAPED_UNICODE));
+            if ($response->successful() && !empty($response->json()["drinks"])) {
+                foreach ($response->json()["drinks"] as $drink) {
+                    $dsPreparo = self::traduzirTexto($drink["strInstructions"]);
+                    $nmBebida  = self::traduzirTexto($drink["strDrink"]);
 
+                    DB::table("bebida")->updateOrInsert(
+                    [
+                        "id_externo" => $drink["idDrink"]
+                    ],
+                    [
+                        "nm_bebida" => $nmBebida,
+                        "ds_preparo" => $dsPreparo,
+                        "id_tipo" => $drink["strAlcoholic"] === "Alcoholic" ? 1 : 2,
+                        "ds_imagem" => $drink["strDrinkThumb"] ?? null,
+                        "created_at" => now(),
+                        "updated_at" => now()
+                    ]);
+                }
+            }
         }
     }
 
-    static function traduzirTexto($texto, $from = 'en', $to = 'pt-BR') {
+    public static function getIngredients()
+    {
+        $url = "https://www.thecocktaildb.com/api/json/v1/1/list.php?i=list";
+        $response = Http::get($url);
+        if ($response->successful() && !empty($response->json()["drinks"])) {
+            foreach ($response->json()["drinks"] as $ingrediente) {
+                $urlIngrediente = "www.thecocktaildb.com/api/json/v1/1/search.php?i={$ingrediente['strIngredient1']}";
+                $ingredientResponse = Http::get($urlIngrediente);
+
+                $objIngrediente = $ingredientResponse->json()["ingredients"][0];
+
+                $nmIngrediente = self::traduzirTexto($objIngrediente["strIngredient"]);
+                $idExterno     = $objIngrediente["idIngredient"];
+
+                DB::table("ingrediente")->updateOrInsert(
+                    ["id_externo" => $idExterno],
+                    ["nm_ingrediente" => $nmIngrediente]
+                );
+            }
+        }
+    }
+
+    public static function getDrinkIngredient()
+    {
+        $arrDrink = DB::table("bebida")->pluck("id_externo");
+
+        foreach ($arrDrink as $idBebida) {
+            
+        }
+    }
+
+    static function traduzirTexto($text, $from = 'en', $to = 'pt-BR') {
         $response = Http::post('http://localhost:5000/translate', [
-            'q' => $texto,
+            'q' => $text,
             'source' => $from,
             'target' => $to,
             'format' => 'text'
@@ -32,6 +81,6 @@ class IntegracaoCockailController extends Controller
             return $response->json()['translatedText'];
         }
 
-        return $texto;
+        return $text;
     }
 }

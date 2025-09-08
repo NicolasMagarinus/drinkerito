@@ -12,7 +12,7 @@ class importDrinks extends Command
      *
      * @var string
      */
-    protected $signature = 'app:import-drinks';
+    protected $signature = 'app:import-drinks ' .  '{acao}';
 
     /**
      * The console command description.
@@ -26,6 +26,20 @@ class importDrinks extends Command
      */
     public function handle()
     {
-        IntegracaoCockailController::getDrinks();
+        $acao = $this->argument('acao');
+        switch ($acao)
+        {
+            case "getDrinks":
+                IntegracaoCockailController::getDrinks();
+            break;
+
+            case "getIngredients":
+                IntegracaoCockailController::getIngredients();
+            break;
+
+            case "getDrinkIngredient":
+                IntegracaoCockailController::getDrinkIngredient();
+            break;
+        }
     }
 }
