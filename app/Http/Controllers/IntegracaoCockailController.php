@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -62,26 +63,76 @@ class IntegracaoCockailController extends Controller
 
     public static function getDrinkIngredient()
     {
-        $arrDrink = DB::table("bebida")->pluck("id_externo");
+        try {
+            DB::beginTransaction();
+            $arrDrink = DB::table("bebida")->pluck("id_externo", "cd_bebida");
 
-        foreach ($arrDrink as $idBebida) {
-            $url = "www.thecocktaildb.com/api/json/v1/1/lookup.php?i={$idBebida}";
+            foreach ($arrDrink as $cdBebida => $idExternoBebida) {
+                $url = "https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i={$idExternoBebida}";
 
-            $response = Http::get($url);
-            $objBebida = $response->json()["drinks"];
-            if ($response->successful() && !empty($objBebida)) {
-                for ($i = 1; $i < 15; $i++) {
-                    $objIngrediente = DB::table("ingrediente")->where("nm_ingrediente", "=", $objBebida[0]);
+                $response = Http::timeout(30)->get($url);
+                $objBebida = $response->json()["drinks"] ?? null;
 
-                    if (!$objIngrediente) {
-                        $urlIngrediente = "www.thecocktaildb.com/api/json/v1/1/search.php?i=" . $objBebida[0]["strIngredient{$i}"];
+                if ($response->successful() && !empty($objBebida)) {
+                    for ($i = 1; $i < 15; $i++) {
+                        $ingredienteStr = $objBebida[0]["strIngredient{$i}"] ?? null;
 
-                        $ingredientResponse = Http::get($urlIngrediente);
+                        if (empty($ingredienteStr)) {
+                            continue;
+                        }
 
-                        //buscar ingrediente pelo id, inserir em ingrediente e depois inserir em bebida_ingrediente. Pegar as medidas
+                        $nmIngrediente = self::traduzirTexto(json_encode($ingredienteStr, JSON_UNESCAPED_UNICODE));
+
+                        $objIngrediente = DB::table("ingrediente")
+                            ->where("nm_ingrediente", $nmIngrediente)
+                            ->first();
+
+                        if (!$objIngrediente) {
+                            $urlIngrediente = "https://www.thecocktaildb.com/api/json/v1/1/search.php?i=" . urlencode($ingredienteStr);
+                            $ingredientResponse = Http::timeout(30)->get($urlIngrediente);
+
+                            if ($ingredientResponse->successful()) {
+                                $ingredienteData = $ingredientResponse->json()["ingredients"][0] ?? null;
+
+                                if ($ingredienteData) {
+                                    $idIngrediente = DB::table("ingrediente")->insertGetId([
+                                        "nm_ingrediente" => $nmIngrediente,
+                                        "id_externo"     => $ingredienteData["idIngredient"] ?? null,
+                                        "created_at"     => now(),
+                                        "updated_at"     => now(),
+                                    ], 'cd_ingrediente');
+                                }
+                            }
+                        } else {
+                            $idIngrediente = $objIngrediente->cd_ingrediente;
+                        }
+
+                        if (empty($idIngrediente)) {
+                            continue;
+                        }
+
+                        $objBebidaIngrediente = DB::table("bebida_ingrediente")
+                            ->where("cd_bebida", $cdBebida)
+                            ->where("cd_ingrediente", $idIngrediente)
+                            ->exists();
+
+                        if (!$objBebidaIngrediente) {
+                            DB::table("bebida_ingrediente")->insert([
+                                "cd_bebida"      => $cdBebida,
+                                "cd_ingrediente" => $idIngrediente,
+                                "ds_medida"      => $objBebida[0]["strMeasure{$i}"] ?? 0,
+                                "created_at"     => now(),
+                                "updated_at"     => now(),
+                            ]);
+                        }
                     }
                 }
             }
+
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            error_log("ERRO: " . $e->getMessage());
         }
     }
 

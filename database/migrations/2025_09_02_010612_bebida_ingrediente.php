@@ -17,6 +17,7 @@ return new class extends Migration
             $table->integer('cd_ingrediente');
             $table->string('ds_medida');
             $table->timestamps();
+            $table->unique(['cd_bebida', 'cd_ingrediente']);
         });
     }
 
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::dropIfExists("bebida_ingrediente");
     }
 };
