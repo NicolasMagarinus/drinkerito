@@ -21,7 +21,7 @@ Route::post('/login',  [LoginController::class, 'login'])->name('login.submit');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::get('/random', [RandomDrinkController::class, 'index'])->name('random');
-Route::get('/search', [SearchController::class, 'index'])->name('search');
+Route::get('/search', [SearchController::class, 'headerSearch'])->name('search');
 
 Route::middleware(['auth'])->group(function () {
     // Route::get('/profile', [ProfileController::class, 'index'])->name('profile');

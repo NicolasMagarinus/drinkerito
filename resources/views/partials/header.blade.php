@@ -8,11 +8,21 @@
             </button>
             
             <div class="collapse navbar-collapse" id="navbarContent">
-                <form class="d-flex mx-auto" style="width: 50%;">
-                    <input class="form-control me-2" type="search" placeholder="Buscar bebidas..." aria-label="Search">
-                    <button class="btn btn-outline-light" type="submit">Buscar</button>
-                </form>
+                <form class="d-flex mx-auto" style="width: 50%;" action="{{ route('search') }}" method="GET">
+                    <input class="form-control me-2" 
+                           type="search" 
+                           name="q" 
+                           placeholder="Buscar bebidas..." 
+                           value="{{ request('q') }}">
+
+                    <select name="mode" class="form-select me-2" style="max-width: 150px;">
+                        <option value="nome" {{ request('mode') === 'nome' ? 'selected' : '' }}>Nome</option>
+                        <option value="ingrediente" {{ request('mode') === 'ingrediente' ? 'selected' : '' }}>Ingrediente</option>
+                        <option value="tipo" {{ request('mode') === 'tipo' ? 'selected' : '' }}>Tipo</option>
+                    </select>
                 
+                    <button class="btn btn-outline-light" type="submit">Buscar</button>
+                </form>                
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('search') }}"><i class="bi bi-compass me-1"></i> Explorar</a>
