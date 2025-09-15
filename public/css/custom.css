@@ -1,0 +1,25 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f8f9fa;
+}
+
+.navbar {
+    background-color: #007bff !important;
+    color: white;
+}
+
+.navbar-brand, .nav-link {
+    color: white !important;
+}
+
+h1, h2 {
+    color: #007bff;
+}
+
+.card {
+    border: 1px solid #007bff;
+}
+
+footer {
+    background-color: #343a40;
+}

@@ -19,6 +19,7 @@ return new class extends Migration
             $table->tinyInteger('id_nota');
             $table->timestamp("dt_avaliacao")->default(now());
             $table->text("ds_avaliacao");
+            $table->timestamps();
         });
 
         DB::statement("ALTER TABLE avaliacao ADD CONSTRAINT chk_id_nota CHECK (id_nota BETWEEN 1 AND 10)");
